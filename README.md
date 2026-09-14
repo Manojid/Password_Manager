@@ -12,10 +12,19 @@ built to explore secure key derivation and symmetric encryption in Python.
 - **Startup verification** — a canary value is encrypted and checked on login,
   so a wrong master password is caught immediately instead of failing later
   on individual entries.
-- **Cryptographically secure password generator** (`secrets` module, not `random`).
-- Add / view / delete individual entries, or clear the whole vault.
+- **Cryptographically secure password generator** (`secrets` module, not `random`),
+  with a live strength indicator in the GUI.
+- Add / view / edit / delete individual entries, or clear the whole vault.
+- **Change master password** — re-encrypts every entry under a new key after
+  verifying the current password.
+- **Forgot master password?** (GUI) — since there's no way to recover a lost
+  master password by design, this lets you wipe the vault and start fresh
+  with a new one, after an explicit confirmation.
 - CLI (`Password_manager.py`) and GUI (`Password_manager_gui.py`) share the
   same encrypted data files, so either interface can be used interchangeably.
+- GUI built with `ttkbootstrap` (dark themed), including search/filter,
+  logout (returns to the lock screen without closing the app), and
+  copy-to-clipboard.
 
 ## Threat model
 
@@ -41,7 +50,7 @@ pip install -r requirements.txt
 python Password_manager.py
 ```
 
-Menu options: View, Add, Delete entry, Clear all, Quit.
+Menu options: View, Add, Delete entry, Change master password, Clear all, Quit.
 
 ### GUI
 
@@ -49,8 +58,9 @@ Menu options: View, Add, Delete entry, Clear all, Quit.
 python Password_manager_gui.py
 ```
 
-Enter your master password in the dialog, then use the Add / View / Copy /
-Delete / Clear All buttons.
+Enter your master password on the lock screen (or use "Forgot master
+password?" to wipe and reset), then use Add / Edit / View / Copy / Delete /
+Clear All, or Change Master Password / Logout from the header.
 
 ## How it works
 

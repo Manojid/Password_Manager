@@ -3,3 +3,4 @@ check.key
 passwords.txt
 __pycache__/
 *.pyc
+.venv/

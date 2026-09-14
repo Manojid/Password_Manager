@@ -130,6 +130,55 @@ def delete_entry():
             f.write(line + "\n")
     print(f"Deleted entry: {removed}")
 
+def change_master_password():
+    global fer, salt
+
+    current = getpass.getpass("Enter current master password: ")
+    current_fer = Fernet(derive_key(current, salt))
+    if not verify_master_password(current_fer):
+        print("Wrong current master password.")
+        return
+
+    new_pwd = getpass.getpass("Enter new master password: ")
+    if not new_pwd:
+        print("Password cannot be empty.")
+        return
+    confirm_pwd = getpass.getpass("Confirm new master password: ")
+    if new_pwd != confirm_pwd:
+        print("Passwords do not match.")
+        return
+
+    password_file = "passwords.txt"
+    entries = []
+    if os.path.exists(password_file):
+        with open(password_file, "r", encoding="utf-8") as f:
+            for line in f:
+                data = line.strip()
+                if not data:
+                    continue
+                try:
+                    name, token_text = data.split("|", 1)
+                    entries.append((name, fer.decrypt(token_text.encode()).decode()))
+                except (InvalidToken, ValueError):
+                    print("Error: Could not decrypt an existing entry. Aborting, nothing was changed.")
+                    return
+
+    new_salt = os.urandom(16)
+    new_fer = Fernet(derive_key(new_pwd, new_salt))
+
+    with open("key.key", "wb") as f:
+        f.write(new_salt)
+    with open("check.key", "wb") as f:
+        f.write(new_fer.encrypt(b"check"))
+    with open(password_file, "w", encoding="utf-8") as f:
+        for name, pwd in entries:
+            token = new_fer.encrypt(pwd.encode()).decode("utf-8")
+            f.write(name + "|" + token + "\n")
+
+    salt = new_salt
+    fer = new_fer
+    print("Master password changed successfully.")
+
 def clear():
     password_file = "passwords.txt"
     if not os.path.exists(password_file):
@@ -143,7 +192,7 @@ def clear():
 print("Welcome Password Manager")
 
 while True:
-    choice = input("Select option:\n1. View\n2. Add\n3. Delete entry\n4. Clear all\n5. Quit\nEnter your choice: ").strip().lower()
+    choice = input("Select option:\n1. View\n2. Add\n3. Delete entry\n4. Change master password\n5. Clear all\n6. Quit\nEnter your choice: ").strip().lower()
 
     if choice == "1" or choice == "view":
         view()
@@ -151,7 +200,9 @@ while True:
         Add()
     elif choice == "3" or choice == "delete entry":
         delete_entry()
-    elif choice == "4" or choice == "clear all":
+    elif choice == "4" or choice == "change master password":
+        change_master_password()
+    elif choice == "5" or choice == "clear all":
         while True:
             clr = input("Are you sure you want to clear all data? (yes/no): ").lower()
             if clr == "yes":
@@ -161,7 +212,7 @@ while True:
                 break
             else:
                 print("Invalid choice, enter yes/no")
-    elif choice == "5" or choice == "quit":
+    elif choice == "6" or choice == "quit":
         print("Goodbye!")
         break
     else:
