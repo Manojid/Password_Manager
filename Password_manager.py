@@ -34,10 +34,30 @@ def get_or_create_salt():
             salt = f.read()
     return salt
 
+def verify_master_password(fer: Fernet):
+    check_file = "check.key"
+    if not os.path.exists(check_file):
+        token = fer.encrypt(b"check")
+        with open(check_file, "wb") as f:
+            f.write(token)
+        return True
+
+    with open(check_file, "rb") as f:
+        token = f.read()
+    try:
+        fer.decrypt(token)
+        return True
+    except InvalidToken:
+        return False
+
 master_pwd = getpass.getpass("Enter your master password: ")
 salt = get_or_create_salt()
 fernet_key = derive_key(master_pwd, salt)
 fer = Fernet(fernet_key)
+
+if not verify_master_password(fer):
+    print("Wrong master password.")
+    exit(1)
 
 def Add():
     name = input("Enter username or website name: ").strip()
@@ -80,6 +100,36 @@ def view():
                 print("Error: Malformed data in file.")
                 continue
 
+def delete_entry():
+    password_file = "passwords.txt"
+    if not os.path.exists(password_file):
+        print("No passwords stored yet.")
+        return
+
+    with open(password_file, "r", encoding="utf-8") as f:
+        lines = [line.rstrip("\n") for line in f if line.strip()]
+
+    if not lines:
+        print("No passwords stored yet.")
+        return
+
+    names = [line.split("|", 1)[0] for line in lines]
+    for i, name in enumerate(names, 1):
+        print(f"{i}. {name}")
+
+    choice = input("Enter the number of the entry to delete (or 0 to cancel): ").strip()
+    if not choice.isdigit() or not (1 <= int(choice) <= len(lines)):
+        print("Cancelled." if choice == "0" else "Invalid choice.")
+        return
+
+    removed = names[int(choice) - 1]
+    del lines[int(choice) - 1]
+
+    with open(password_file, "w", encoding="utf-8") as f:
+        for line in lines:
+            f.write(line + "\n")
+    print(f"Deleted entry: {removed}")
+
 def clear():
     password_file = "passwords.txt"
     if not os.path.exists(password_file):
@@ -93,13 +143,15 @@ def clear():
 print("Welcome Password Manager")
 
 while True:
-    choice = input("Select option:\n1. View\n2. Add\n3. Clear all\n4. Quit\nEnter your choice: ").strip().lower()
+    choice = input("Select option:\n1. View\n2. Add\n3. Delete entry\n4. Clear all\n5. Quit\nEnter your choice: ").strip().lower()
 
     if choice == "1" or choice == "view":
         view()
     elif choice == "2" or choice == "add":
         Add()
-    elif choice == "3" or choice == "clear all":
+    elif choice == "3" or choice == "delete entry":
+        delete_entry()
+    elif choice == "4" or choice == "clear all":
         while True:
             clr = input("Are you sure you want to clear all data? (yes/no): ").lower()
             if clr == "yes":
@@ -109,7 +161,7 @@ while True:
                 break
             else:
                 print("Invalid choice, enter yes/no")
-    elif choice == "4" or choice == "quit":
+    elif choice == "5" or choice == "quit":
         print("Goodbye!")
         break
     else:
