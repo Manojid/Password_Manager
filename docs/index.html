@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Secure Vault — Password Manager</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --bg-alt: #161922;
+    --card: #1b1f2a;
+    --border: #2a2f3d;
+    --text: #e8eaf0;
+    --text-dim: #9aa1b2;
+    --accent: #4da3ff;
+    --accent-soft: rgba(77, 163, 255, 0.12);
+    --success: #3ecf8e;
+    --warning: #f5b940;
+    --danger: #ef5a6f;
+    --radius: 14px;
+    --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.6;
+    scroll-behavior: smooth;
+  }
+
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .wrap {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* Nav */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: rgba(15, 17, 21, 0.85);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+  nav .wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--text);
+  }
+  .brand-icon {
+    width: 30px; height: 30px;
+    display: grid; place-items: center;
+    background: var(--accent-soft);
+    border-radius: 8px;
+    font-size: 16px;
+  }
+  .nav-links { display: flex; gap: 24px; font-size: 0.92rem; }
+  .nav-links a { color: var(--text-dim); }
+  .nav-links a:hover { color: var(--text); text-decoration: none; }
+  .nav-cta {
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text) !important;
+    font-size: 0.88rem;
+  }
+  .nav-cta:hover { border-color: var(--accent); text-decoration: none; }
+
+  /* Hero */
+  header.hero {
+    padding: 90px 0 70px;
+    text-align: center;
+    background:
+      radial-gradient(circle at 50% 0%, rgba(77,163,255,0.10), transparent 60%);
+  }
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 6px 14px;
+    border-radius: 999px;
+    margin-bottom: 22px;
+    letter-spacing: 0.02em;
+  }
+  h1 {
+    font-size: clamp(2.1rem, 4.5vw, 3.2rem);
+    margin: 0 0 18px;
+    letter-spacing: -0.02em;
+  }
+  .hero p.lede {
+    max-width: 620px;
+    margin: 0 auto 34px;
+    color: var(--text-dim);
+    font-size: 1.08rem;
+  }
+  .hero-actions {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 22px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    border: 1px solid transparent;
+  }
+  .btn:hover { text-decoration: none; }
+  .btn-primary { background: var(--accent); color: #0b1220; }
+  .btn-primary:hover { background: #6bb4ff; }
+  .btn-ghost { border-color: var(--border); color: var(--text); }
+  .btn-ghost:hover { border-color: var(--accent); }
+
+  .stack-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 30px;
+  }
+  .pill {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    background: var(--bg-alt);
+    border: 1px solid var(--border);
+    padding: 5px 12px;
+    border-radius: 999px;
+  }
+
+  /* Sections */
+  section { padding: 70px 0; }
+  section.alt { background: var(--bg-alt); }
+  h2 {
+    font-size: clamp(1.5rem, 3vw, 1.9rem);
+    margin: 0 0 12px;
+    letter-spacing: -0.01em;
+  }
+  .section-intro {
+    color: var(--text-dim);
+    max-width: 640px;
+    margin: 0 0 40px;
+  }
+
+  /* Feature grid */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 18px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+  }
+  .card .icon {
+    width: 38px; height: 38px;
+    display: grid; place-items: center;
+    background: var(--accent-soft);
+    border-radius: 9px;
+    margin-bottom: 14px;
+    font-size: 18px;
+  }
+  .card h3 { margin: 0 0 8px; font-size: 1.02rem; }
+  .card p { margin: 0; color: var(--text-dim); font-size: 0.92rem; }
+
+  /* Screenshots */
+  .shots {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+  }
+  .shot {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .shot .img-wrap {
+    height: 260px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 16px;
+  }
+  .shot img {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  }
+  .shot .caption {
+    padding: 14px 16px;
+    font-size: 0.88rem;
+    color: var(--text-dim);
+  }
+  .shot .caption strong { color: var(--text); }
+
+  /* How it works */
+  .steps {
+    counter-reset: step;
+    display: grid;
+    gap: 14px;
+  }
+  .step {
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 22px;
+  }
+  .step .num {
+    counter-increment: step;
+    flex-shrink: 0;
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent);
+    display: grid; place-items: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+  }
+  .step p { margin: 0; color: var(--text-dim); font-size: 0.93rem; }
+  .step code { color: var(--text); }
+
+  code, pre {
+    font-family: var(--mono);
+    font-size: 0.86rem;
+  }
+  code {
+    background: rgba(255,255,255,0.06);
+    padding: 2px 6px;
+    border-radius: 5px;
+  }
+  pre {
+    background: #0b0d12;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    color: #d6dbe6;
+  }
+  pre code { background: none; padding: 0; }
+
+  /* Threat model callout */
+  .callout {
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--warning);
+    background: var(--card);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 22px 26px;
+  }
+  .callout h3 {
+    margin: 0 0 8px;
+    font-size: 1rem;
+    color: var(--warning);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .callout p { margin: 0 0 10px; color: var(--text-dim); font-size: 0.93rem; }
+  .callout p:last-child { margin-bottom: 0; }
+
+  /* Run it yourself two-col */
+  .run-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 720px) {
+    .run-grid { grid-template-columns: 1fr; }
+    .nav-links { display: none; }
+  }
+  .run-card h3 {
+    margin: 0 0 12px;
+    font-size: 0.95rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+  }
+
+  footer {
+    padding: 40px 0;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    border-top: 1px solid var(--border);
+  }
+  footer a { color: var(--text-dim); }
+  footer a:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <div class="brand">
+      <span class="brand-icon">🔐</span>
+      Secure Vault
+    </div>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#screenshots">Screenshots</a>
+      <a href="#how-it-works">How it works</a>
+      <a href="#run-it">Run it</a>
+    </div>
+    <a class="nav-cta" href="https://github.com/Manojid/Password_Manager" target="_blank" rel="noopener">GitHub ↗</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="eyebrow">🐍 Python · CLI + Desktop GUI</span>
+    <h1>A local password manager built to<br>get encryption right, not just working.</h1>
+    <p class="lede">
+      PBKDF2-derived keys, Fernet encryption, and a canary-based password check —
+      wrapped in both a terminal interface and a themed desktop app. No servers,
+      no accounts, no cloud sync: your vault never leaves your machine.
+    </p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="https://github.com/Manojid/Password_Manager" target="_blank" rel="noopener">View source on GitHub</a>
+      <a class="btn btn-ghost" href="#run-it">Run it locally</a>
+    </div>
+    <div class="stack-row">
+      <span class="pill">Python 3</span>
+      <span class="pill">cryptography (Fernet)</span>
+      <span class="pill">PBKDF2-HMAC-SHA256</span>
+      <span class="pill">ttkbootstrap</span>
+      <span class="pill">CLI + Tkinter GUI</span>
+    </div>
+  </div>
+</header>
+
+<section id="features">
+  <div class="wrap">
+    <h2>What it does</h2>
+    <p class="section-intro">
+      Every feature exists because of a specific security or usability decision —
+      not just to check a box.
+    </p>
+    <div class="grid">
+      <div class="card">
+        <div class="icon">🔑</div>
+        <h3>Master-password protected</h3>
+        <p>One password unlocks the vault. Nothing is ever stored in plaintext — not even the key itself.</p>
+      </div>
+      <div class="card">
+        <div class="icon">🧂</div>
+        <h3>PBKDF2 key derivation</h3>
+        <p>390,000 iterations of PBKDF2-HMAC-SHA256 turn your password + a random salt into the encryption key.</p>
+      </div>
+      <div class="card">
+        <div class="icon">🛡️</div>
+        <h3>Fernet encryption</h3>
+        <p>Every entry is individually encrypted with AES-128-CBC + HMAC via the <code>cryptography</code> library's Fernet spec.</p>
+      </div>
+      <div class="card">
+        <div class="icon">✅</div>
+        <h3>Fail-fast verification</h3>
+        <p>A canary value is checked at login, so a wrong master password is caught immediately — not three entries deep.</p>
+      </div>
+      <div class="card">
+        <div class="icon">🎲</div>
+        <h3>Secure generator</h3>
+        <p>Passwords are generated with Python's <code>secrets</code> module, not <code>random</code> — with a live strength meter in the GUI.</p>
+      </div>
+      <div class="card">
+        <div class="icon">✏️</div>
+        <h3>Full CRUD + search</h3>
+        <p>Add, edit, view, copy, delete, and search entries — plus clear the whole vault when you need a clean slate.</p>
+      </div>
+      <div class="card">
+        <div class="icon">🔁</div>
+        <h3>Change master password</h3>
+        <p>Re-encrypts every stored entry under a brand new key after verifying the current password.</p>
+      </div>
+      <div class="card">
+        <div class="icon">🚪</div>
+        <h3>Logout &amp; reset</h3>
+        <p>Lock the vault without closing the app, or wipe everything and start over if the master password is truly lost.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="alt" id="screenshots">
+  <div class="wrap">
+    <h2>Screenshots</h2>
+    <p class="section-intro">CLI and GUI share the same encrypted vault files — pick whichever interface fits the moment.</p>
+    <div class="shots">
+      <div class="shot">
+        <div class="img-wrap"><img src="assets/login.png" alt="Login screen" loading="lazy"></div>
+        <div class="caption"><strong>Lock screen</strong> — dark themed unlock, with a "forgot master password" reset path.</div>
+      </div>
+      <div class="shot">
+        <div class="img-wrap"><img src="assets/vault.png" alt="Main vault view" loading="lazy"></div>
+        <div class="caption"><strong>Vault view</strong> — searchable entry list with Add / Edit / View / Copy / Delete.</div>
+      </div>
+      <div class="shot">
+        <div class="img-wrap"><img src="assets/add-entry.png" alt="Add entry dialog" loading="lazy"></div>
+        <div class="caption"><strong>Add entry</strong> — built-in generator and live password strength indicator.</div>
+      </div>
+      <div class="shot">
+        <div class="img-wrap"><img src="assets/view-password.png" alt="View password" loading="lazy"></div>
+        <div class="caption"><strong>View password</strong> — decrypts and displays a single entry on demand.</div>
+      </div>
+      <div class="shot">
+        <div class="img-wrap"><img src="assets/change-master-password.png" alt="Change master password dialog" loading="lazy"></div>
+        <div class="caption"><strong>Change master password</strong> — re-encrypts every entry under a new key.</div>
+      </div>
+      <div class="shot">
+        <div class="img-wrap"><img src="assets/forgot-password.png" alt="Forgot master password reset flow" loading="lazy"></div>
+        <div class="caption"><strong>Forgot password</strong> — wipes the vault and sets a new master password when the old one is truly lost.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="how-it-works">
+  <div class="wrap">
+    <h2>How the encryption works</h2>
+    <p class="section-intro">Four steps, every time the vault is touched.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="num"></div>
+        <p>On first run, a random 16-byte salt is generated and stored in <code>key.key</code>.</p>
+      </div>
+      <div class="step">
+        <div class="num"></div>
+        <p>Your master password + that salt are run through <strong>PBKDF2-HMAC-SHA256</strong> (390,000 iterations) to derive a 256-bit key, base64-encoded for Fernet.</p>
+      </div>
+      <div class="step">
+        <div class="num"></div>
+        <p>A canary value is encrypted with that key and stored in <code>check.key</code> — future logins decrypt it to verify the password before touching real data.</p>
+      </div>
+      <div class="step">
+        <div class="num"></div>
+        <p>Each entry's password is individually encrypted with <strong>Fernet</strong> and stored as <code>name|token</code> in <code>passwords.txt</code>.</p>
+      </div>
+    </div>
+
+    <div style="height: 30px;"></div>
+
+    <div class="callout">
+      <h3>⚠️ Threat model — read before trusting it with real passwords</h3>
+      <p>
+        This protects data <strong>at rest</strong>: someone who steals <code>passwords.txt</code>, <code>key.key</code>,
+        and <code>check.key</code> without your master password cannot recover the stored passwords
+        (short of brute-forcing the master password itself).
+      </p>
+      <p>
+        It does <strong>not</strong> protect against keyloggers, memory scraping, or a compromised machine
+        while the vault is unlocked. There is also <strong>no password recovery</strong> — the master
+        password <em>is</em> the key, so losing it means the "Forgot master password" flow wipes the vault
+        rather than recovering it.
+      </p>
+      <p>
+        This is a learning project exploring key derivation and symmetric encryption in Python — not a
+        production-grade password manager. For real-world use, prefer an established tool
+        (Bitwarden, 1Password, KeePass).
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="alt" id="run-it">
+  <div class="wrap">
+    <h2>Run it yourself</h2>
+    <p class="section-intro">Everything runs locally — no account, no server, no data ever leaves your machine.</p>
+    <div class="run-grid">
+      <div class="run-card">
+        <h3>Setup</h3>
+        <pre><code>git clone https://github.com/Manojid/Password_Manager.git
+cd Password_Manager
+pip install -r requirements.txt</code></pre>
+      </div>
+      <div class="run-card">
+        <h3>Launch</h3>
+        <pre><code># Command line
+python Password_manager.py
+
+# Desktop GUI
+python Password_manager_gui.py</code></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    Built by Manoj &middot; <a href="https://github.com/Manojid/Password_Manager" target="_blank" rel="noopener">Source on GitHub</a>
+  </div>
+</footer>
+
+</body>
+</html>
